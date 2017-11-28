@@ -939,7 +939,7 @@ int libvshadow_io_handle_read_catalog(
 					goto on_error;
 				}
 				if( ( *volume_size == 0 )
-				 && ( store_descriptor_index == 0 ) )
+				 && ( store_descriptor_index == 0 || store_descriptor->volume_size != 0) )
 				{
 					*volume_size = store_descriptor->volume_size;
 				}
@@ -962,8 +962,8 @@ int libvshadow_io_handle_read_catalog(
 			}
 			else if( catalog_entry_type == 3 )
 			{
-				if( ( last_store_descriptor != NULL )
-				 && ( memory_compare(
+				if( ( last_store_descriptor == NULL )
+				 || ( memory_compare(
 				       store_descriptor->identifier,
 				       last_store_descriptor->identifier,
 				       16 ) != 0 ) )
@@ -975,18 +975,10 @@ int libvshadow_io_handle_read_catalog(
 					          (intptr_t **) &last_store_descriptor,
 					          error );
 
-					if( result == -1 )
-					{
-						libcerror_error_set(
-						 error,
-						 LIBCERROR_ERROR_DOMAIN_RUNTIME,
-						 LIBCERROR_RUNTIME_ERROR_GET_FAILED,
-						 "%s: unable to retrieve store descriptors by identifier.",
-						 function );
-
-						goto on_error;
-					}
+					if( result != 1 )
+						last_store_descriptor = NULL;
 				}
+
 /* TODO look for the last store decriptor ? */
 				if( last_store_descriptor != NULL )
 				{
@@ -997,14 +989,31 @@ int libvshadow_io_handle_read_catalog(
 					last_store_descriptor->store_previous_bitmap_offset  = store_descriptor->store_previous_bitmap_offset;
 					last_store_descriptor->has_in_volume_store_data      = 1;
 				}
-#if defined( HAVE_DEBUG_OUTPUT )
 				else
 				{
-					libcnotify_printf(
-					 "%s: missing last store descriptor.\n",
-					 function );
+					store_descriptor->volume_size = *volume_size;
+					store_descriptor->has_in_volume_store_data  = 1;
+
+					if( libcdata_array_insert_entry(
+					     store_descriptors_array,
+					     &store_descriptor_index,
+					     (intptr_t *) store_descriptor,
+					     (int(*)(intptr_t *, intptr_t *, libcerror_error_t **)) &libvshadow_store_descriptor_compare_by_identifier,
+					     LIBCDATA_INSERT_FLAG_UNIQUE_ENTRIES,
+					     error ) != 1 )
+					{
+						libcerror_error_set(
+							error,
+							LIBCERROR_ERROR_DOMAIN_RUNTIME,
+							LIBCERROR_RUNTIME_ERROR_APPEND_FAILED,
+							"%s: unable to append store descriptor to array.",
+							function );
+
+						goto on_error;
+					}
+					store_descriptor = NULL;
 				}
-#endif
+				last_store_descriptor = NULL;
 			}
 			catalog_block_offset += (size_t) 128;
 			catalog_block_size   -= (size_t) 128;
