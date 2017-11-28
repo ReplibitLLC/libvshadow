@@ -107,8 +107,9 @@ int libvshadow_store_descriptor_initialize(
 
 		return( -1 );
 	}
-	if( libcdata_list_initialize(
-	     &( ( *store_descriptor )->block_descriptors_list ),
+	if( libcdata_array_initialize(
+	     &( ( *store_descriptor )->block_descriptors_array ),
+		 0,
 	     error ) != 1 )
 	{
 		libcerror_error_set(
@@ -215,10 +216,10 @@ on_error:
 			 NULL,
 			 NULL );
 		}
-		if( ( *store_descriptor )->block_descriptors_list != NULL )
+		if( ( *store_descriptor )->block_descriptors_array != NULL )
 		{
-			libcdata_list_free(
-			 &( ( *store_descriptor )->block_descriptors_list ),
+			libcdata_array_free(
+			 &( ( *store_descriptor )->block_descriptors_array ),
 			 NULL,
 			 NULL );
 		}
@@ -306,8 +307,8 @@ int libvshadow_store_descriptor_free(
 
 			result = -1;
 		}
-		if( libcdata_list_free(
-		     &( ( *store_descriptor )->block_descriptors_list ),
+		if( libcdata_array_free(
+		     &( ( *store_descriptor )->block_descriptors_array ),
 		     (int (*)(intptr_t **, libcerror_error_t **)) &libvshadow_block_descriptor_free,
 		     error ) != 1 )
 		{
@@ -1535,7 +1536,7 @@ int libvshadow_store_descriptor_read_store_block_list(
 	static char *function                           = "libvshadow_store_descriptor_read_store_block_list";
 	uint16_t block_size                             = 0;
 	int result                                      = 0;
-
+	int entry_index                                 = 0;
 	if( store_descriptor == NULL )
 	{
 		libcerror_error_set(
@@ -1656,8 +1657,9 @@ int libvshadow_store_descriptor_read_store_block_list(
 
 				goto on_error;
 			}
-			if( libcdata_list_append_value(
-			     store_descriptor->block_descriptors_list,
+			if( libcdata_array_append_entry(
+			     store_descriptor->block_descriptors_array,
+				 &entry_index,
 			     (intptr_t *) block_descriptor,
 			     error ) != 1 )
 			{
@@ -3298,8 +3300,8 @@ int libvshadow_store_descriptor_get_number_of_blocks(
 		return( -1 );
 	}
 #endif
-	if( libcdata_list_get_number_of_elements(
-	     store_descriptor->block_descriptors_list,
+	if( libcdata_array_get_number_of_entries(
+	     store_descriptor->block_descriptors_array,
 	     number_of_blocks,
 	     error ) != 1 )
 	{
@@ -3396,8 +3398,8 @@ int libvshadow_store_descriptor_get_block_descriptor_by_index(
 		return( -1 );
 	}
 #endif
-	if( libcdata_list_get_value_by_index(
-	     store_descriptor->block_descriptors_list,
+	if( libcdata_array_get_entry_by_index(
+	     store_descriptor->block_descriptors_array,
 	     block_index,
 	     (intptr_t **) block_descriptor,
 	     error ) != 1 )
